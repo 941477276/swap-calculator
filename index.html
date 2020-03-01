@@ -10,13 +10,141 @@
   <meta name="format-detection" content="telephone=no,email=no,address=no">
   <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
   <title>合约计算器</title>
-  <link rel="stylesheet" href="./lib/vant/vant_2.4.min.css">
-<link href="main.css?6ff44808feba3ca0edf8" rel="stylesheet"></head>
+  <link rel="stylesheet" href="./lib/element-ui/element-ui_2.13.0.min.css">
+<link href="main.css?5b6cf29c4202c3da7978" rel="stylesheet"></head>
 <body>
-  <div id="app">
-    <van-button type="default">默认按钮</van-button>
+  <div class="app" id="app">
+    <div class="page-content" v-cloak>
+      <el-radio-group class="calculator-type-radio" v-model="calculatorType">
+        <el-radio-button :label="1">盈亏计算</el-radio-button>
+        <el-radio-button :label="2">强平价格</el-radio-button>
+        <el-radio-button :label="3">目标收益率</el-radio-button>
+      </el-radio-group>
+      <el-form class="calculator-form" ref="form" :model="form" label-width="130px">
+        <el-form-item label="方向">
+          <el-radio-group class="yellow-border-radio" v-model="form.options">
+            <el-radio-button :label="1">多</el-radio-button>
+            <el-radio-button :label="2">空</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="计算类型" v-if="calculatorType === 3">
+          <el-radio-group class="yellow-border-radio" v-model="form.targetEarnings">
+            <el-radio-button :label="1">目标收益额</el-radio-button>
+            <el-radio-button :label="2">目标收益率</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item class="has-bg-form-item" label="杠杆">
+          <el-select v-model="form.leverageInfo.value" placeholder=" ">
+            <el-option
+                v-for="(item, index) in leverageList"
+                v-if="item.name !== 'allCabin'"
+                :key="index"
+                :label="item.name" :value="item.value"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item class="has-bg-form-item" label="仓位">
+          <el-input type="input" v-model="form.positions">
+            <template slot="append">张</template>
+          </el-input>
+        </el-form-item>
+        <el-form-item class="has-bg-form-item" label="开仓价格">
+          <el-input type="input" v-model="form.openPrice">
+            <template slot="append">USDT</template>
+          </el-input>
+        </el-form-item>
+        <el-form-item class="has-bg-form-item" label="平仓价格" v-if="calculatorType === 1">
+          <el-input type="input" v-model="form.closePrice">
+            <template slot="append">USDT</template>
+          </el-input>
+        </el-form-item>
+        <el-form-item class="has-bg-form-item" :label="form.targetEarnings === 1 ? '目标收益额' : '目标收益率'" v-if="calculatorType === 3">
+          <el-input type="input" v-model="form.earnings">
+            <template slot="append">USDT</template>
+          </el-input>
+        </el-form-item>
+        <el-button class="calculate-btn" @click="calculator" type="primary">开始计算</el-button>
+      </el-form>
+      <el-card class="calculator-result-card" header="计算结果">
+        <ul class="result-list" v-if="calculatorType === 1">
+          <li class="result-item">
+            <div class="field-name">占用保证金</div>
+            <div class="field-value">
+              {{ profitAndLoss.im | addCommom(common.valueUnit) }} <span class="amount-unit">{{ common.marginUnit }}</span>
+            </div>
+          </li>
+          <li class="result-item">
+            <div class="field-name">仓位价值</div>
+            <div class="field-value">
+              {{ profitAndLoss.value | addCommom(common.valueUnit) }} <span class="amount-unit">{{ common.marginUnit }}</span>
+            </div>
+          </li>
+          <li class="result-item">
+            <div class="field-name">盈亏</div>
+            <div class="field-value">
+              {{ profitAndLoss.pl | addCommom(common.valueUnit) }} <span class="amount-unit">{{ common.marginUnit }}</span>
+            </div>
+          </li>
+          <li class="result-item">
+            <div class="field-name">收益率</div>
+            <div class="field-value">
+              {{ profitAndLoss.rate | addCommom(2) }}%
+            </div>
+          </li>
+        </ul>
+        <ul class="result-list" v-else-if="calculatorType === 2">
+          <li class="result-item">
+            <div class="field-name">强平价格</div>
+            <div class="field-value">
+              {{ flatPrice.flatPrice | addCommom(common.pxUnit - 1)}} <span class="amount-unit">{{ productInfo.quote_coin }}</span>
+            </div>
+          </li>
+          <li class="result-item">
+            <div class="field-name">仓位价值</div>
+            <div class="field-value">
+              {{ flatPrice.value | addCommom(common.valueUnit) }} <span class="amount-unit">{{ productInfo.quote_coin }}</span>
+            </div>
+          </li>
+          <li class="result-item">
+            <div class="field-name">实际起始保证金率</div>
+            <div class="field-value">
+              {{ flatPrice.im }}
+            </div>
+          </li>
+          <li class="result-item">
+            <div class="field-name">实际维持保证金率</div>
+            <div class="field-value">
+              {{ flatPrice.mm }}
+            </div>
+          </li>
+        </ul>
+        <ul class="result-list" v-else-if="calculatorType === 3">
+          <li class="result-item">
+            <div class="field-name">占用保证金</div>
+            <div class="field-value">
+              {{ targetClose.im | addCommom(common.valueUnit) }} <span class="amount-unit">{{ common.marginUnit }}</span>
+            </div>
+          </li>
+          <li class="result-item">
+            <div class="field-name">目标平仓价格</div>
+            <div class="field-value">
+              <span v-if="targetClose.price">{{targetClose.price | addCommom(common.pxUnit - 1)}}</span>
+              <span v-else>--</span>
+              <span class="amount-unit">{{ productInfo.quote_coin }}</span>
+            </div>
+          </li>
+          <li class="result-item">
+            <div class="field-name">收益率</div>
+            <div class="field-value">
+              <span v-if="form.targetEarnings === 1">{{ targetClose.valueOrRote | addCommom(2) +'%' }}</span>
+              <span v-else>{{ targetClose.valueOrRote | addCommom(common.valueUnit) }}{{ common.marginUnit }}</span>
+            </div>
+          </li>
+        </ul>
+      </el-card>
+      <p class="calculator-result-tips">计算结果仅供参考。实际操作中可能会因为手续费，资金费率导致计算结果存在偏差</p>
+    </div>
   </div>
   <script src="./lib/vue/vue_v2.6.11.js"></script>
-  <script src="./lib/vant/vant_2.4.min.js"></script>
-<script type="text/javascript" src="index.js?h=&6ff44808feba3ca0edf8"></script></body>
+  <script src="./lib/element-ui/element-ui_2.13.0.min.js"></script>
+<script type="text/javascript" src="index.js?h=&5b6cf29c4202c3da7978"></script></body>
 </html>
