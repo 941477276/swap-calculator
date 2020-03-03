@@ -11,10 +11,27 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
   <title>合约计算器</title>
   <link rel="stylesheet" href="./lib/element-ui/element-ui_2.13.0.min.css">
-<link href="main.css?5b6cf29c4202c3da7978" rel="stylesheet"></head>
+<link href="main.css?d96419d26430acb0fa80" rel="stylesheet"></head>
 <body>
   <div class="app" id="app">
     <div class="page-content" v-cloak>
+      <div class="header-fixed">
+        <div class="header">
+          <h1 class="title">合约计算器</h1>
+          <el-dropdown trigger="click" class="coin-toggle-dropdown">
+          <span class="el-dropdown-link">
+            下拉菜单<i class="el-icon-s-fold"></i>
+          </span>
+            <el-dropdown-menu class="coin-list-popover" slot="dropdown">
+              <el-dropdown-item class="coin-list-caption" disabled>数字货币</el-dropdown-item>
+              <el-dropdown-item class="active">BTC/USDT</el-dropdown-item>
+              <el-dropdown-item>ETH/USDT</el-dropdown-item>
+              <el-dropdown-item>BCH/USDT</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+        </div>
+      </div>
+
       <el-radio-group class="calculator-type-radio" v-model="calculatorType">
         <el-radio-button :label="1">盈亏计算</el-radio-button>
         <el-radio-button :label="2">强平价格</el-radio-button>
@@ -146,5 +163,5 @@
   </div>
   <script src="./lib/vue/vue_v2.6.11.js"></script>
   <script src="./lib/element-ui/element-ui_2.13.0.min.js"></script>
-<script type="text/javascript" src="index.js?h=&5b6cf29c4202c3da7978"></script></body>
+<script type="text/javascript" src="index.js?h=&d96419d26430acb0fa80"></script></body>
 </html>
